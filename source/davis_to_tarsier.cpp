@@ -178,16 +178,12 @@ application_engine.rootContext()->setContextProperty("header_height",
 				auto select_rectangle = tarsier::make_select_rectangle<sepia::dvs_event>(
 					0, 0, 240, 180,
 					[&](sepia::dvs_event event){
-						//std::cout << "selected polarity: " << event.is_increase << '\n';
-						event.is_increase = false;
 						dvs_display->push(event);
-						//printf("selected event within ts: %d, x: %d, y: %d, pol: %d.\n", event.t, event.x, event.y, event.is_increase);
 					}
 				);
 
 				for(auto event : *polarity){
-						auto sepia_event = sepia::dvs_event{event.getTimestamp(), event.getX(), davis_info.dvsSizeY - event.getY(), static_cast<bool>(event.getPolarity())};
-						//printf("New event is now a sepia event with ts: %d, x: %d, y: %d, pol: %d.\n", sepia_event.t, sepia_event.x, sepia_event.y, sepia_event.is_increase);
+						auto sepia_event = sepia::dvs_event{static_cast<uint64_t>(event.getTimestamp()), event.getX(), static_cast<uint16_t>(davis_info.dvsSizeY - event.getY()), static_cast<bool>(event.getPolarity())};
 						select_rectangle(sepia_event);
 				}
 			}
