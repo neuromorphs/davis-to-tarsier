@@ -3,9 +3,8 @@
 #include "../third_party/chameleon/source/dvs_display.hpp"
 #include "../third_party/sepia/source/sepia.hpp"
 #include "../third_party/sepia/source/sepia.hpp"
-#include "../third_party/tarsier/source/mirror_x.hpp"
 #include "../third_party/tarsier/source/select_rectangle.hpp"
-#include "../third_party/tarsier/source/stitch.hpp"
+#include "my_filter.hpp"
 #include <QtGui/QGuiApplication>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
@@ -190,8 +189,8 @@ int main(int argc, char *argv[]) {
                   packet);
 
           auto select_rectangle =
-              tarsier::make_select_rectangle<sepia::dvs_event>(
-                  0, 0, 240, 180,
+              tarsier::make_my_filter<sepia::dvs_event>(
+                  20, 20, 200, 160,
                   [&](sepia::dvs_event event) { dvs_display->push(event); });
 
           for (auto event : *polarity) {
