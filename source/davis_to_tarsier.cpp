@@ -1,8 +1,11 @@
 #define LIBCAER_FRAMECPP_OPENCV_INSTALLED 0
 #include <libcaercpp/devices/davis.hpp>
 #include <atomic>
+#include <iostream>
 #include <csignal>
-#include <third_party/tarsier/source/mirror_x.hpp>
+#include "../third_party/tarsier/source/mirror_x.hpp"
+#include "../third_party/tarsier/source/select_rectangle.hpp"
+#include "../third_party/sepia/source/sepia.hpp"
 
 using namespace std;
 
@@ -114,7 +117,7 @@ int main(void) {
 			continue; // Skip if nothing there.
 		}
 
-		printf("\nGot event container with %d packets (allocated).\n", packetContainer->size());
+		//printf("\nGot event container with %d packets (allocated).\n", packetContainer->size());
 
 		for (auto &packet : *packetContainer) {
 			if (packet == nullptr) {
@@ -122,8 +125,8 @@ int main(void) {
 				continue; // Skip if nothing there.
 			}
 
-			printf("Packet of type %d -> %d events, %d capacity.\n", packet->getEventType(), packet->getEventNumber(),
-				packet->getEventCapacity());
+			//printf("Packet of type %d -> %d events, %d capacity.\n", packet->getEventType(), packet->getEventNumber(),
+			//	packet->getEventCapacity());
 
 			if (packet->getEventType() == POLARITY_EVENT) {
 				std::shared_ptr<const libcaer::events::PolarityEventPacket> polarity
@@ -132,12 +135,21 @@ int main(void) {
 				// Get full timestamp and addresses of first event.
 				const libcaer::events::PolarityEvent &firstEvent = (*polarity)[0];
 
-				int32_t ts = firstEvent.getTimestamp();
-				uint16_t x = firstEvent.getX();
-				uint16_t y = firstEvent.getY();
-				bool pol   = firstEvent.getPolarity();
+				auto select_rectangle = tarsier::make_select_rectangle<sepia::dvs_event>(
+					100, 100, 20, 20,
+					[&](sepia::dvs_event event){
+						std::cout << "selected polarity: " << event.is_increase << '\n';
+						//printf("selected event within ts: %d, x: %d, y: %d, pol: %d.\n", event.t, event.x, event.y, event.is_increase);
+					}
+				);
 
-				printf("First polarity event - ts: %d, x: %d, y: %d, pol: %d.\n", ts, x, y, pol);
+				int count = 0;
+				for(auto event : *polarity){
+						auto sepia_event = sepia::dvs_event{event.getTimestamp(), event.getX(), event.getY(), static_cast<bool>(event.getPolarity())};
+						printf("New event is now a sepia event with ts: %d, x: %d, y: %d, pol: %d.\n", sepia_event.t, sepia_event.x, sepia_event.y, sepia_event.is_increase);
+						select_rectangle(sepia_event);
+
+				}
 			}
 
 			if (packet->getEventType() == FRAME_EVENT) {
